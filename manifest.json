@@ -1,0 +1,12 @@
+{
+  "name":"IM Enterprises Invoice Generator",
+  "short_name":"IM Invoice",
+  "start_url":"./",
+  "display":"standalone",
+  "background_color":"#f3f4f6",
+  "theme_color":"#111827",
+  "description":"Excel to A5 landscape Tally-style invoice PDF generator",
+  "icons":[
+    {"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+  ]
+}

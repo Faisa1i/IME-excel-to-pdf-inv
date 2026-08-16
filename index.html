@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="IM Invoice">
+<link rel="manifest" href="manifest.json">
+<title>IM Enterprises Invoice Generator</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f4f6;color:#111827;font-family:Arial,Helvetica,sans-serif}
+.app{max-width:760px;margin:auto;padding:16px}.card{background:#fff;border:1px solid #ddd;border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px #0000000d}
+h1{font-size:21px;margin:0 0 4px}.muted{color:#6b7280;font-size:13px}.btn{border:0;border-radius:9px;padding:12px 16px;font-weight:700;font-size:15px;cursor:pointer;background:#111827;color:#fff}.btn.secondary{background:#e5e7eb;color:#111827}.btn:disabled{opacity:.45}
+input[type=file]{width:100%;padding:12px;border:1px dashed #9ca3af;border-radius:9px;background:#fafafa}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.row>*{flex:1}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:#f9fafb;border:1px solid #e5e7eb;padding:12px;border-radius:9px}.stat b{display:block;font-size:18px}.stat span{font-size:12px;color:#6b7280}
+.progress{height:8px;background:#e5e7eb;border-radius:8px;overflow:hidden}.bar{height:100%;width:0;background:#111827;transition:.2s}
+#status{font-size:13px;white-space:pre-wrap}.install{display:none}
+@media(max-width:500px){.stats{grid-template-columns:1fr 1fr}.app{padding:10px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="card">
+    <h1>I M ENTERPRISES — Invoice Generator</h1>
+    <div class="muted">A5 Landscape • Tally-style • Excel → PDF</div>
+  </div>
+
+  <div class="card">
+    <b>1. Upload Excel file</b>
+    <p class="muted">Expected sheets: <b>Sale Bills</b> and <b>GSTR-1 Summary</b>. The final TOTAL row in Sale Bills is ignored.</p>
+    <input id="file" type="file" accept=".xlsx,.xls">
+  </div>
+
+  <div class="card">
+    <div class="stats">
+      <div class="stat"><b id="invoiceCount">0</b><span>Invoices</span></div>
+      <div class="stat"><b id="totalSales">₹0.00</b><span>Total Sales</span></div>
+      <div class="stat"><b id="gstrRows">0</b><span>GSTR-1 Rows</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <button class="btn" id="generate" disabled>Generate PDF</button>
+      <button class="btn secondary" id="installBtn" style="display:none">Install App</button>
+    </div>
+    <div style="height:12px"></div>
+    <div class="progress"><div class="bar" id="bar"></div></div>
+    <div style="height:8px"></div>
+    <div id="status">Upload your Excel file to begin.</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
+<script>
+const ADDRESS="Mahal Mas Opp Mahtar Mahal Masjid, PID-23427, Ward No. 7A, CTS-67, CR-53, Jamiya Masjid Road, Vijayapura, Karnataka - 586101";
+const GSTIN="29BPZPJ1392D1ZE";
+let invoices=[], summary=[];
+
+const $=id=>document.getElementById(id);
+const money=n=>Number(n||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
+const val=(r,k)=>r[k]??r[k.replace(/ /g,"")]??"";
+function num(v){let n=Number(v);return isFinite(n)?n:0}
+function cleanRows(rows){
+  return rows.filter(r=>val(r,"Invoice No.")).filter(r=>!String(val(r,"Invoice No.")).toUpperCase().includes("TOTAL"));
+}
+function fmtDate(v){
+  if(v instanceof Date && !isNaN(v)) return String(v.getDate()).padStart(2,"0")+"-"+String(v.getMonth()+1).padStart(2,"0")+"-"+v.getFullYear();
+  if(typeof v==="number"){const d=new Date(Math.round((v-25569)*86400*1000));return isNaN(d)?"":fmtDate(d)}
+  const d=new Date(v); return isNaN(d)?"":fmtDate(d);
+}
+function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+
+$("file").addEventListener("change",async e=>{
+  const f=e.target.files[0]; if(!f)return;
+  try{
+    $("status").textContent="Reading Excel…";
+    const data=await f.arrayBuffer();
+    const wb=XLSX.read(data,{type:"array",cellDates:true});
+    if(!wb.SheetNames.includes("Sale Bills")) throw new Error('Sheet "Sale Bills" not found.');
+    const sale=XLSX.utils.sheet_to_json(wb.Sheets["Sale Bills"],{defval:""});
+    invoices=cleanRows(sale);
+    summary=wb.SheetNames.includes("GSTR-1 Summary")?XLSX.utils.sheet_to_json(wb.Sheets["GSTR-1 Summary"],{defval:""}):[];
+    $("invoiceCount").textContent=invoices.length;
+    $("totalSales").textContent="₹"+money(invoices.reduce((a,r)=>a+num(val(r,"Invoice Value")),0));
+    $("gstrRows").textContent=summary.length;
+    $("generate").disabled=!invoices.length;
+    $("status").textContent=`Loaded ${invoices.length} invoices and ${summary.length} GSTR-1 summary rows.`;
+  }catch(err){$("status").textContent="Error: "+err.message;$("generate").disabled=true}
+});
+
+function header(doc){
+  doc.setFont("helvetica","bold");doc.setFontSize(15);doc.text("I M ENTERPRISES",148.5,10,{align:"center"});
+  doc.setFont("helvetica","normal");doc.setFontSize(7);
+  doc.text("GSTIN: "+GSTIN,148.5,15,{align:"center"});
+  doc.setFontSize(6.2);doc.text(ADDRESS,148.5,19,{align:"center",maxWidth:280});
+}
+function box(doc,x,y,w,h){doc.rect(x,y,w,h)}
+function text(doc,s,x,y,size=7,align="left"){doc.setFont("helvetica","normal");doc.setFontSize(size);doc.text(String(s??""),x,y,{align,maxWidth:200})}
+
+function invoicePage(doc,r){
+  header(doc);
+  const inv=val(r,"Invoice No."), date=fmtDate(val(r,"Invoice Date"));
+  const buyer=val(r,"Buyer")||"Cash Sale (B2C)", pos=val(r,"Place of Supply")||"Karnataka (29)";
+  const particulars=val(r,"Particulars"), qty=num(val(r,"Quantity"))||1;
+  const rate=num(val(r,"GST Rate %")), taxable=num(val(r,"Taxable Value"));
+  const cgst=num(val(r,"CGST")), sgst=num(val(r,"SGST")), igst=num(val(r,"IGST"));
+  const gst=num(val(r,"Total GST")), total=num(val(r,"Invoice Value"));
+
+  let y=24;
+  box(doc,7,y,283,22);
+  doc.line(145,y,145,y+22);doc.line(7,y+11,290,y+11);
+  doc.setFont("helvetica","bold");doc.setFontSize(9);doc.text("TAX INVOICE",76,y+7,{align:"center"});
+  text(doc,"Invoice No.: "+inv,149,y+6,7);text(doc,"Date: "+date,149,y+15,7);
+  text(doc,"Buyer: "+buyer,10,y+18,7);text(doc,"Place of Supply: "+pos,149,y+18,7);
+  y+=26;
+  // Items
+  box(doc,7,y,283,24);doc.line(19,y,19,y+24);doc.line(150,y,150,y+24);doc.line(172,y,172,y+24);doc.line(210,y,210,y+24);
+  doc.line(7,y+8,290,y+8);
+  doc.setFont("helvetica","bold");doc.setFontSize(7);
+  doc.text("Sr.",13,y+5,{align:"center"});doc.text("Particulars",84,y+5,{align:"center"});
+  doc.text("Qty",161,y+5,{align:"center"});doc.text("Rate",191,y+5,{align:"center"});doc.text("Taxable Value",250,y+5,{align:"center"});
+  text(doc,"1",13,y+15,7,"center");text(doc,particulars,22,y+15,7);text(doc,money(qty).replace(".00",""),168,y+15,7,"right");
+  text(doc,money(taxable/qty),207,y+15,7,"right");text(doc,money(taxable),287,y+15,7,"right");
+  y+=28;
+  box(doc,7,y,283,22);
+  const xs=[7,45,102,149,196,243,290];
+  xs.slice(1,-1).forEach(x=>doc.line(x,y,x,y+22));doc.line(7,y+8,290,y+8);
+  doc.setFont("helvetica","bold");doc.setFontSize(6.5);
+  ["GST Rate","Taxable Value","CGST","SGST","IGST","Total GST"].forEach((s,i)=>doc.text(s,(xs[i]+xs[i+1])/2,y+5,{align:"center"}));
+  doc.setFont("helvetica","normal");doc.setFontSize(7);
+  [rate+"%",money(taxable),money(cgst),money(sgst),money(igst),money(gst)].forEach((s,i)=>doc.text(s,xs[i+1]-2,y+15,{align:"right"}));
+  y+=26;
+  box(doc,7,y,283,51);
+  doc.line(222,y,222,y+51);
+  doc.setFont("helvetica","normal");doc.setFontSize(7);
+  [["Taxable Value",taxable],["CGST",cgst],["SGST",sgst],["IGST",igst],["Total GST",gst],["GRAND TOTAL",total]].forEach((a,i)=>{
+    const yy=y+7+i*7; doc.text(a[0],11,yy); doc.text(money(a[1]),218,yy,{align:"right"});
+  });
+  doc.setFont("helvetica","bold");doc.text("GRAND TOTAL",11,y+42);doc.text("₹ "+money(total),218,y+42,{align:"right"});
+  text(doc,"Payment: Cash / UPI  •  B2C Sale",148.5,y+59,7,"center");
+  doc.line(25,y+75,125,y+75);doc.line(170,y+75,270,y+75);
+  text(doc,"Customer Signature",75,y+79,6.5,"center");text(doc,"For I M ENTERPRISES",220,y+79,6.5,"center");
+  text(doc,"Authorised Signatory",220,y+90,6.5,"center");
+}
+
+function gstr1Page(doc){
+  header(doc);
+  doc.setFont("helvetica","bold");doc.setFontSize(13);doc.text("GSTR-1 REPORT",148.5,29,{align:"center"});
+  doc.setFont("helvetica","normal");doc.setFontSize(8);doc.text("B2C Sales Summary",148.5,34,{align:"center"});
+  const cols=["Particulars","No. of Bills","Taxable Value","CGST","SGST","IGST","Total GST","Invoice Value"];
+  const body=summary.map(r=>cols.map(c=>c==="Particulars"?String(val(r,c)):c==="No. of Bills"?String(num(val(r,c))):money(val(r,c))));
+  doc.autoTable({startY:39,head:[cols],body,margin:{left:13,right:13},theme:"grid",
+    styles:{font:"helvetica",fontSize:7,cellPadding:2.5,halign:"right",lineColor:[0,0,0],lineWidth:.2},
+    headStyles:{halign:"center",fontStyle:"bold",fillColor:[245,245,245],textColor:[0,0,0]},
+    columnStyles:{0:{halign:"left",cellWidth:48},1:{cellWidth:22},2:{cellWidth:27},3:{cellWidth:23},4:{cellWidth:23},5:{cellWidth:21},6:{cellWidth:28},7:{cellWidth:28}}
+  });
+  const y=doc.lastAutoTable.finalY+10;
+  doc.setFontSize(7);doc.text("Source: GSTR-1 Summary sheet from the uploaded Excel report.",148.5,y,{align:"center"});
+}
+
+$("generate").addEventListener("click",()=>{
+  if(!invoices.length)return;
+  try{
+    $("generate").disabled=true;
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({orientation:"landscape",unit:"mm",format:"a5"});
+    invoices.forEach((r,i)=>{
+      if(i)doc.addPage();
+      invoicePage(doc,r);
+      $("bar").style.width=((i+1)/invoices.length*95)+"%";
+    });
+    doc.addPage();gstr1Page(doc);
+    doc.save("IM_Enterprises_A5_Landscape_Invoices_GSTR1.pdf");
+    $("bar").style.width="100%";
+    $("status").textContent=`PDF created: ${invoices.length} invoices + 1 GSTR-1 report page.`;
+  }catch(err){$("status").textContent="PDF error: "+err.message}
+  finally{$("generate").disabled=false}
+});
+
+let deferredPrompt;
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredPrompt=e;$("installBtn").style.display="block"});
+$("installBtn").addEventListener("click",async()=>{
+  if(!deferredPrompt)return;
+  deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;$("installBtn").style.display="none";
+});
+if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+</script>
+</body>
+</html>
