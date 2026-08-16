@@ -1,712 +1,1315 @@
-
-
-<!-- IM Enterprises Invoice Generator - Pages deployment update -->
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover">
+
 <meta name="theme-color" content="#111827">
+
 <meta name="apple-mobile-web-app-capable" content="yes">
+
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="IM Invoice">
+
+<meta name="apple-mobile-web-app-title"
+      content="IM Invoice">
+
 <link rel="manifest" href="manifest.json">
+
 <title>IM Enterprises Invoice Generator</title>
+
 <style>
-*{box-sizing:border-box}body{margin:0;background:#f3f4f6;color:#111827;font-family:Arial,Helvetica,sans-serif}
-.app{max-width:760px;margin:auto;padding:16px}.card{background:#fff;border:1px solid #ddd;border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px #0000000d}
-h1{font-size:21px;margin:0 0 4px}.muted{color:#6b7280;font-size:13px}.btn{border:0;border-radius:9px;padding:12px 16px;font-weight:700;font-size:15px;cursor:pointer;background:#111827;color:#fff}.btn.secondary{background:#e5e7eb;color:#111827}.btn:disabled{opacity:.45}
-input[type=file]{width:100%;padding:12px;border:1px dashed #9ca3af;border-radius:9px;background:#fafafa}
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.row>*{flex:1}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:#f9fafb;border:1px solid #e5e7eb;padding:12px;border-radius:9px}.stat b{display:block;font-size:18px}.stat span{font-size:12px;color:#6b7280}
-.progress{height:8px;background:#e5e7eb;border-radius:8px;overflow:hidden}.bar{height:100%;width:0;background:#111827;transition:.2s}
-#status{font-size:13px;white-space:pre-wrap}.install{display:none}
-@media(max-width:500px){.stats{grid-template-columns:1fr 1fr}.app{padding:10px}}
+
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  background:#f3f4f6;
+  color:#111827;
+  font-family:Arial,Helvetica,sans-serif;
+}
+
+.app{
+  max-width:760px;
+  margin:auto;
+  padding:16px;
+}
+
+.card{
+  background:#fff;
+  border:1px solid #ddd;
+  border-radius:12px;
+  padding:16px;
+  margin-bottom:14px;
+  box-shadow:0 2px 8px rgba(0,0,0,.05);
+}
+
+h1{
+  font-size:21px;
+  margin:0 0 4px;
+}
+
+.muted{
+  color:#6b7280;
+  font-size:13px;
+}
+
+input[type=file]{
+  width:100%;
+  padding:12px;
+  border:1px dashed #9ca3af;
+  border-radius:9px;
+  background:#fafafa;
+}
+
+.row{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.btn{
+  border:0;
+  border-radius:9px;
+  padding:12px 16px;
+  font-weight:700;
+  font-size:15px;
+  cursor:pointer;
+  background:#111827;
+  color:#fff;
+}
+
+.btn.secondary{
+  background:#e5e7eb;
+  color:#111827;
+}
+
+.btn:disabled{
+  opacity:.45;
+}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+}
+
+.stat{
+  background:#f9fafb;
+  border:1px solid #e5e7eb;
+  padding:12px;
+  border-radius:9px;
+}
+
+.stat b{
+  display:block;
+  font-size:18px;
+}
+
+.stat span{
+  font-size:12px;
+  color:#6b7280;
+}
+
+.progress{
+  height:8px;
+  background:#e5e7eb;
+  border-radius:8px;
+  overflow:hidden;
+}
+
+.bar{
+  height:100%;
+  width:0;
+  background:#111827;
+  transition:.2s;
+}
+
+#status{
+  font-size:13px;
+  white-space:pre-wrap;
+}
+
+@media(max-width:500px){
+
+  .stats{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .app{
+    padding:10px;
+  }
+
+}
+
 </style>
+
 </head>
+
+
 <body>
+
 <div class="app">
-  <div class="card">
-    <h1>I M ENTERPRISES — Invoice Generator</h1>
-    <div class="muted">A5 Landscape • Tally-style • Excel → PDF</div>
-  </div>
+
 
   <div class="card">
+
+    <h1>
+      I M ENTERPRISES — Invoice Generator
+    </h1>
+
+    <div class="muted">
+      A5 Landscape • Tally-style • Excel → PDF
+    </div>
+
+  </div>
+
+
+  <div class="card">
+
     <b>1. Upload Excel file</b>
-    <p class="muted">Expected sheets: <b>Sale Bills</b> and <b>GSTR-1 Summary</b>. The final TOTAL row in Sale Bills is ignored.</p>
-    <input id="file" type="file" accept=".xlsx,.xls">
+
+    <p class="muted">
+
+      Expected sheets:
+
+      <b>Sale Bills</b>
+
+      and
+
+      <b>GSTR-1 Summary</b>.
+
+      The final TOTAL row in Sale Bills is automatically ignored.
+
+    </p>
+
+    <input
+      id="file"
+      type="file"
+      accept=".xlsx,.xls"
+    >
+
   </div>
 
+
   <div class="card">
+
     <div class="stats">
-      <div class="stat"><b id="invoiceCount">0</b><span>Invoices</span></div>
-      <div class="stat"><b id="totalSales">₹0.00</b><span>Total Sales</span></div>
-      <div class="stat"><b id="gstrRows">0</b><span>GSTR-1 Rows</span></div>
+
+      <div class="stat">
+
+        <b id="invoiceCount">0</b>
+
+        <span>Invoices</span>
+
+      </div>
+
+
+      <div class="stat">
+
+        <b id="totalSales">₹0.00</b>
+
+        <span>Total Sales</span>
+
+      </div>
+
+
+      <div class="stat">
+
+        <b id="gstrRows">0</b>
+
+        <span>GSTR-1 Rows</span>
+
+      </div>
+
     </div>
+
   </div>
 
+
   <div class="card">
+
     <div class="row">
-      <button class="btn" id="generate" disabled>Generate PDF</button>
-      <button class="btn secondary" id="installBtn" style="display:none">Install App</button>
+
+      <button
+        class="btn"
+        id="generate"
+        disabled
+      >
+        Generate PDF
+      </button>
+
+
+      <button
+        class="btn secondary"
+        id="installBtn"
+        style="display:none"
+      >
+        Install App
+      </button>
+
     </div>
+
+
     <div style="height:12px"></div>
-    <div class="progress"><div class="bar" id="bar"></div></div>
+
+
+    <div class="progress">
+
+      <div
+        class="bar"
+        id="bar"
+      ></div>
+
+    </div>
+
+
     <div style="height:8px"></div>
-    <div id="status">Upload your Excel file to begin.</div>
+
+
+    <div id="status">
+      Upload your Excel file to begin.
+    </div>
+
   </div>
+
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
 
-  <script>
-const ADDRESS="Mahal Mas Opp Mahtar Mahal Masjid, PID-23427, Ward No. 7A, CTS-67, CR-53, Jamiya Masjid Road, Vijayapura, Karnataka - 586101";
-const GSTIN="29BPZPJ1392D1ZE";
+<!-- EXCEL -->
 
-let invoices=[];
-let summary=[];
-
-const $=id=>document.getElementById(id);
-
-const money=n=>Number(n||0).toLocaleString("en-IN",{
-  minimumFractionDigits:2,
-  maximumFractionDigits:2
-});
-
-const val=(r,k)=>r[k]??r[k.replace(/ /g,"")]??"";
-
-function num(v){
-  const n=Number(v);
-  return isFinite(n)?n:0;
-}
-
-function cleanRows(rows){
-  return rows
-    .filter(r=>val(r,"Invoice No."))
-    .filter(r=>!String(val(r,"Invoice No.")).toUpperCase().includes("TOTAL"));
-}
-
-function fmtDate(v){
-  if(v instanceof Date && !isNaN(v)){
-    return String(v.getDate()).padStart(2,"0")+"-"+
-           String(v.getMonth()+1).padStart(2,"0")+"-"+
-           v.getFullYear();
-  }
-
-  if(typeof v==="number"){
-    const d=new Date(Math.round((v-25569)*86400*1000));
-    return isNaN(d)?"":fmtDate(d);
-  }
-
-  const d=new Date(v);
-  return isNaN(d)?"":fmtDate(d);
-}
+<script
+src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js">
+</script>
 
 
-/* =========================
-   EXCEL UPLOAD
-========================= */
+<!-- PDF -->
 
-$("file").addEventListener("change",async e=>{
-  const f=e.target.files[0];
+<script
+src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js">
+</script>
 
-  if(!f)return;
 
-  try{
-    $("status").textContent="Reading Excel…";
+<!-- AUTOTABLE -->
 
-    const data=await f.arrayBuffer();
+<script
+src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js">
+</script>
 
-    const wb=XLSX.read(data,{
-      type:"array",
-      cellDates:true
-    });
 
-    if(!wb.SheetNames.includes("Sale Bills")){
-      throw new Error('Sheet "Sale Bills" not found.');
+<script>
+
+
+/* =====================================================
+   BUSINESS DETAILS
+===================================================== */
+
+const BUSINESS_NAME =
+"I M ENTERPRISES";
+
+const GSTIN =
+"29BPZPJ1392D1ZE";
+
+const ADDRESS =
+"Mahal Mas Opp Mahtar Mahal Masjid, PID-23427, Ward No. 7A, CTS-67, CR-53, Jamiya Masjid Road, Vijayapura, Karnataka - 586101";
+
+
+/* =====================================================
+   VARIABLES
+===================================================== */
+
+let invoices = [];
+
+let summary = [];
+
+
+/* =====================================================
+   HELPERS
+===================================================== */
+
+const $ = id =>
+document.getElementById(id);
+
+
+function money(value){
+
+  const n = Number(value || 0);
+
+  return n.toLocaleString(
+    "en-IN",
+    {
+      minimumFractionDigits:2,
+      maximumFractionDigits:2
     }
+  );
 
-    invoices=cleanRows(
-      XLSX.utils.sheet_to_json(
-        wb.Sheets["Sale Bills"],
-        {defval:""}
-      )
-    );
+}
 
-    summary=wb.SheetNames.includes("GSTR-1 Summary")
-      ? XLSX.utils.sheet_to_json(
-          wb.Sheets["GSTR-1 Summary"],
-          {defval:""}
-        )
-      : [];
 
-    $("invoiceCount").textContent=invoices.length;
+function number(value){
 
-    $("totalSales").textContent=
-      "₹"+
-      money(
-        invoices.reduce(
-          (a,r)=>a+num(val(r,"Invoice Value")),
-          0
+  const n = Number(value);
+
+  return isFinite(n) ? n : 0;
+
+}
+
+
+function getValue(row,key){
+
+  if(row[key] !== undefined)
+    return row[key];
+
+  const compact =
+    key.replace(/ /g,"");
+
+  if(row[compact] !== undefined)
+    return row[compact];
+
+  return "";
+
+}
+
+
+/* =====================================================
+   DATE
+===================================================== */
+
+function formatDate(value){
+
+  if(
+    value instanceof Date &&
+    !isNaN(value)
+  ){
+
+    return String(
+      value.getDate()
+    ).padStart(2,"0")
+    + "-"
+    +
+    String(
+      value.getMonth()+1
+    ).padStart(2,"0")
+    + "-"
+    +
+    value.getFullYear();
+
+  }
+
+
+  if(typeof value === "number"){
+
+    const d =
+      new Date(
+        Math.round(
+          (value - 25569) *
+          86400 *
+          1000
         )
       );
 
-    $("gstrRows").textContent=summary.length;
-
-    $("generate").disabled=!invoices.length;
-
-    $("status").textContent=
-      `Loaded ${invoices.length} invoices and ${summary.length} GSTR-1 summary rows.`;
-
-  }catch(err){
-
-    $("status").textContent="Error: "+err.message;
-    $("generate").disabled=true;
+    if(!isNaN(d))
+      return formatDate(d);
 
   }
+
+
+  const d =
+    new Date(value);
+
+  if(!isNaN(d))
+    return formatDate(d);
+
+  return "";
+
+}
+
+
+/* =====================================================
+   CLEAN SALE BILLS
+===================================================== */
+
+function cleanInvoices(rows){
+
+  return rows
+    .filter(row =>
+      getValue(row,"Invoice No.")
+    )
+    .filter(row =>
+      !String(
+        getValue(row,"Invoice No.")
+      )
+      .toUpperCase()
+      .includes("TOTAL")
+    );
+
+}
+
+
+/* =====================================================
+   EXCEL UPLOAD
+===================================================== */
+
+$("file").addEventListener(
+"change",
+async function(event){
+
+  const file =
+    event.target.files[0];
+
+  if(!file)
+    return;
+
+
+  try{
+
+    $("status").textContent =
+      "Reading Excel file…";
+
+
+    const buffer =
+      await file.arrayBuffer();
+
+
+    const workbook =
+      XLSX.read(
+        buffer,
+        {
+          type:"array",
+          cellDates:true
+        }
+      );
+
+
+    /* Sale Bills */
+
+    if(
+      !workbook.SheetNames.includes(
+        "Sale Bills"
+      )
+    ){
+
+      throw new Error(
+        'Sheet "Sale Bills" not found.'
+      );
+
+    }
+
+
+    const saleRows =
+      XLSX.utils.sheet_to_json(
+        workbook.Sheets["Sale Bills"],
+        {
+          defval:""
+        }
+      );
+
+
+    invoices =
+      cleanInvoices(
+        saleRows
+      );
+
+
+    /* GSTR-1 */
+
+    if(
+      workbook.SheetNames.includes(
+        "GSTR-1 Summary"
+      )
+    ){
+
+      summary =
+        XLSX.utils.sheet_to_json(
+          workbook.Sheets[
+            "GSTR-1 Summary"
+          ],
+          {
+            defval:""
+          }
+        );
+
+    }
+    else{
+
+      summary=[];
+
+    }
+
+
+    /* Statistics */
+
+    $("invoiceCount").textContent =
+      invoices.length;
+
+
+    const sales =
+      invoices.reduce(
+        (total,row) =>
+          total +
+          number(
+            getValue(
+              row,
+              "Invoice Value"
+            )
+          ),
+        0
+      );
+
+
+    $("totalSales").textContent =
+      "₹"+money(sales);
+
+
+    $("gstrRows").textContent =
+      summary.length;
+
+
+    $("generate").disabled =
+      invoices.length === 0;
+
+
+    $("status").textContent =
+      "Loaded "
+      + invoices.length
+      + " invoices and "
+      + summary.length
+      + " GSTR-1 summary rows.";
+
+  }
+
+
+  catch(error){
+
+    $("status").textContent =
+      "Error: "
+      + error.message;
+
+    $("generate").disabled =
+      true;
+
+  }
+
 });
 
 
-/* =========================
-   PDF HELPERS
-========================= */
+/* =====================================================
+   PDF HEADER
+===================================================== */
 
-function text(doc,s,x,y,size=7,align="left",maxWidth=195){
+function drawHeader(doc){
 
-  doc.setFont("helvetica","normal");
-  doc.setFontSize(size);
+  /*
+     A5 LANDSCAPE
 
-  doc.text(
-    String(s??""),
-    x,
-    y,
-    {
-      align:align,
-      maxWidth:maxWidth
-    }
+     Width  = 210 mm
+     Height = 148 mm
+
+     Safe margin:
+     10 mm left/right
+  */
+
+
+  doc.setFont(
+    "helvetica",
+    "bold"
   );
-}
 
+  doc.setFontSize(12);
 
-function line(doc,x1,y1,x2,y2){
-  doc.line(x1,y1,x2,y2);
-}
-
-
-/* =========================
-   A5 LANDSCAPE HEADER
-   PAGE = 210 × 148 mm
-========================= */
-
-function header(doc){
-
-  doc.setFont("helvetica","bold");
-  doc.setFontSize(13);
 
   doc.text(
-    "I M ENTERPRISES",
+    BUSINESS_NAME,
     105,
     8,
-    {align:"center"}
+    {
+      align:"center"
+    }
   );
 
-  doc.setFont("helvetica","normal");
+
+  doc.setFont(
+    "helvetica",
+    "normal"
+  );
+
   doc.setFontSize(6.5);
+
 
   doc.text(
     "GSTIN: "+GSTIN,
     105,
     12,
-    {align:"center"}
-  );
-
-  doc.setFontSize(5.2);
-
-  doc.text(
-    ADDRESS,
-    105,
-    16,
     {
-      align:"center",
-      maxWidth:196
+      align:"center"
     }
   );
-}
-
-
-/* =========================
-   INVOICE PAGE
-========================= */
-
-function invoicePage(doc,r){
-
-  header(doc);
-
-  const inv=val(r,"Invoice No.");
-  const date=fmtDate(val(r,"Invoice Date"));
-
-  const buyer=
-    val(r,"Buyer") ||
-    "Cash Sale (B2C)";
-
-  const pos=
-    val(r,"Place of Supply") ||
-    "Karnataka (29)";
-
-  const particulars=
-    val(r,"Particulars");
-
-  const qty=
-    num(val(r,"Quantity")) || 1;
-
-  const rate=
-    num(val(r,"GST Rate %"));
-
-  const taxable=
-    num(val(r,"Taxable Value"));
-
-  const cgst=
-    num(val(r,"CGST"));
-
-  const sgst=
-    num(val(r,"SGST"));
-
-  const igst=
-    num(val(r,"IGST"));
-
-  const gst=
-    num(val(r,"Total GST"));
-
-  const total=
-    num(val(r,"Invoice Value"));
 
 
   /*
-     IMPORTANT:
-     A5 LANDSCAPE = 210 × 148 mm
-
-     Everything below stays inside:
-     left  = 5 mm
-     right = 205 mm
+     Address deliberately wrapped
+     into two lines for readability.
   */
 
-  let y=20;
+  doc.setFontSize(5.7);
 
-
-  /* ---------- Invoice Header ---------- */
-
-  doc.rect(
-    5,
-    y,
-    200,
-    19
-  );
-
-  line(doc,105,y,105,y+19);
-  line(doc,5,y+9.5,205,y+9.5);
-
-  doc.setFont("helvetica","bold");
-  doc.setFontSize(8);
 
   doc.text(
-    "TAX INVOICE",
-    55,
-    y+6,
-    {align:"center"}
-  );
-
-  text(
-    doc,
-    "Invoice No.: "+inv,
-    108,
-    y+5.5,
-    6.5
-  );
-
-  text(
-    doc,
-    "Date: "+date,
-    108,
-    y+14,
-    6.5
-  );
-
-  text(
-    doc,
-    "Buyer: "+buyer,
-    7,
-    y+15.5,
-    6.2
-  );
-
-  text(
-    doc,
-    "Place of Supply: "+pos,
-    108,
-    y+15.5,
-    6.2
-  );
-
-
-  y+=22;
-
-
-  /* ---------- Particulars ---------- */
-
-  const ix=[
-    5,
-    14,
-    120,
-    140,
-    170,
-    205
-  ];
-
-  doc.rect(
-    5,
-    y,
-    200,
-    23
-  );
-
-  ix.slice(1,-1).forEach(x=>{
-    line(doc,x,y,x,y+23);
-  });
-
-  line(
-    doc,
-    5,
-    y+7,
-    205,
-    y+7
-  );
-
-  doc.setFont("helvetica","bold");
-  doc.setFontSize(6.3);
-
-  [
-    "Sr.",
-    "Particulars",
-    "Qty",
-    "Rate",
-    "Taxable Value"
-  ].forEach((s,i)=>{
-
-    doc.text(
-      s,
-      (ix[i]+ix[i+1])/2,
-      y+4.7,
-      {align:"center"}
-    );
-
-  });
-
-
-  text(
-    doc,
-    "1",
-    9.5,
-    y+15,
-    6.5,
-    "center"
-  );
-
-  text(
-    doc,
-    particulars,
-    16,
-    y+15,
-    6.3,
-    "left",
-    100
-  );
-
-  text(
-    doc,
-    money(qty).replace(".00",""),
-    137,
-    y+15,
-    6.3,
-    "right"
-  );
-
-  text(
-    doc,
-    money(taxable/qty),
-    168,
-    y+15,
-    6.3,
-    "right"
-  );
-
-  text(
-    doc,
-    money(taxable),
-    202,
-    y+15,
-    6.3,
-    "right"
-  );
-
-
-  y+=26;
-
-
-  /* ---------- GST SUMMARY ---------- */
-
-  const gx=[
-    5,
-    33,
-    73,
+    "Mahal Mas Opp Mahtar Mahal Masjid, PID-23427, Ward No. 7A,",
     105,
-    137,
-    169,
-    205
-  ];
-
-  doc.rect(
-    5,
-    y,
-    200,
-    19
+    16,
+    {
+      align:"center"
+    }
   );
 
-  gx.slice(1,-1).forEach(x=>{
-    line(doc,x,y,x,y+19);
-  });
-
-  line(
-    doc,
-    5,
-    y+7,
-    205,
-    y+7
-  );
-
-  doc.setFont("helvetica","bold");
-  doc.setFontSize(5.8);
-
-  [
-    "GST Rate",
-    "Taxable Value",
-    "CGST",
-    "SGST",
-    "IGST",
-    "Total GST"
-  ].forEach((s,i)=>{
-
-    doc.text(
-      s,
-      (gx[i]+gx[i+1])/2,
-      y+4.5,
-      {align:"center"}
-    );
-
-  });
-
-
-  doc.setFont("helvetica","normal");
-  doc.setFontSize(6.3);
-
-  [
-    rate+"%",
-    money(taxable),
-    money(cgst),
-    money(sgst),
-    money(igst),
-    money(gst)
-  ].forEach((s,i)=>{
-
-    doc.text(
-      s,
-      gx[i+1]-1.5,
-      y+14,
-      {align:"right"}
-    );
-
-  });
-
-
-  y+=22;
-
-
-  /* ---------- TOTALS ---------- */
-
-  const split=154;
-
-  doc.rect(
-    5,
-    y,
-    200,
-    39
-  );
-
-  line(
-    doc,
-    split,
-    y,
-    split,
-    y+39
-  );
-
-
-  doc.setFont("helvetica","normal");
-  doc.setFontSize(6.5);
-
-  [
-    ["Taxable Value",taxable],
-    ["CGST",cgst],
-    ["SGST",sgst],
-    ["IGST",igst],
-    ["Total GST",gst]
-  ].forEach((a,i)=>{
-
-    const yy=
-      y+
-      6+
-      i*6.2;
-
-    doc.text(
-      a[0],
-      8,
-      yy
-    );
-
-    doc.text(
-      money(a[1]),
-      split-3,
-      yy,
-      {align:"right"}
-    );
-
-  });
-
-
-  doc.setFont("helvetica","bold");
 
   doc.text(
-    "GRAND TOTAL",
-    8,
-    y+36
+    "CTS-67, CR-53, Jamiya Masjid Road, Vijayapura, Karnataka - 586101",
+    105,
+    20,
+    {
+      align:"center"
+    }
   );
+
+}
+
+
+/* =====================================================
+   INVOICE PAGE
+===================================================== */
+
+function createInvoicePage(doc,row){
+
+  const LEFT = 10;
+
+  const WIDTH = 190;
+
+
+  /* Data */
+
+  const invoiceNo =
+    getValue(
+      row,
+      "Invoice No."
+    );
+
+
+  const invoiceDate =
+    formatDate(
+      getValue(
+        row,
+        "Invoice Date"
+      )
+    );
+
+
+  const buyer =
+    getValue(
+      row,
+      "Buyer"
+    ) ||
+    "Cash Sale (B2C)";
+
+
+  const place =
+    getValue(
+      row,
+      "Place of Supply"
+    ) ||
+    "Karnataka (29)";
+
+
+  const particulars =
+    getValue(
+      row,
+      "Particulars"
+    );
+
+
+  const quantity =
+    number(
+      getValue(
+        row,
+        "Quantity"
+      )
+    ) || 1;
+
+
+  const gstRate =
+    number(
+      getValue(
+        row,
+        "GST Rate %"
+      )
+    );
+
+
+  const taxable =
+    number(
+      getValue(
+        row,
+        "Taxable Value"
+      )
+    );
+
+
+  const cgst =
+    number(
+      getValue(
+        row,
+        "CGST"
+      )
+    );
+
+
+  const sgst =
+    number(
+      getValue(
+        row,
+        "SGST"
+      )
+    );
+
+
+  const igst =
+    number(
+      getValue(
+        row,
+        "IGST"
+      )
+    );
+
+
+  const totalGST =
+    number(
+      getValue(
+        row,
+        "Total GST"
+      )
+    );
+
+
+  const invoiceValue =
+    number(
+      getValue(
+        row,
+        "Invoice Value"
+      )
+    );
+
+
+  /* Header */
+
+  drawHeader(doc);
+
+
+  /*
+     Starting position after header
+  */
+
+  let y = 24;
+
+
+  /* =================================================
+     INVOICE INFORMATION
+  ================================================= */
+
+  doc.autoTable({
+
+    startY:y,
+
+    margin:{
+      left:LEFT,
+      right:10
+    },
+
+    theme:"grid",
+
+    head:[
+      [
+        "TAX INVOICE",
+        "Invoice No.: "+invoiceNo,
+        "Date: "+invoiceDate
+      ]
+    ],
+
+    body:[
+      [
+        "Buyer: "+buyer,
+        "",
+        "Place of Supply: "+place
+      ]
+    ],
+
+    columnStyles:{
+
+      0:{
+        cellWidth:70,
+        halign:"left"
+      },
+
+      1:{
+        cellWidth:60,
+        halign:"left"
+      },
+
+      2:{
+        cellWidth:60,
+        halign:"left"
+      }
+
+    },
+
+    styles:{
+      font:"helvetica",
+      fontSize:6.3,
+      cellPadding:2.5,
+      lineColor:[0,0,0],
+      lineWidth:.25,
+      textColor:[0,0,0],
+      valign:"middle"
+    },
+
+    headStyles:{
+      fontStyle:"bold",
+      fontSize:6.8,
+      halign:"left",
+      fillColor:[248,248,248],
+      textColor:[0,0,0]
+    },
+
+    bodyStyles:{
+      fontSize:6.1
+    }
+
+  });
+
+
+  y =
+    doc.lastAutoTable.finalY + 3;
+
+
+  /* =================================================
+     PARTICULARS
+  ================================================= */
+
+  doc.autoTable({
+
+    startY:y,
+
+    margin:{
+      left:LEFT,
+      right:10
+    },
+
+    theme:"grid",
+
+    head:[
+      [
+        "Sr.",
+        "Particulars",
+        "Qty",
+        "Rate",
+        "Taxable Value"
+      ]
+    ],
+
+    body:[
+      [
+        "1",
+        particulars,
+        money(quantity)
+          .replace(".00",""),
+        money(
+          taxable / quantity
+        ),
+        money(taxable)
+      ]
+    ],
+
+    columnStyles:{
+
+      0:{
+        cellWidth:10,
+        halign:"center"
+      },
+
+      1:{
+        cellWidth:96,
+        halign:"left"
+      },
+
+      2:{
+        cellWidth:20,
+        halign:"right"
+      },
+
+      3:{
+        cellWidth:30,
+        halign:"right"
+      },
+
+      4:{
+        cellWidth:34,
+        halign:"right"
+      }
+
+    },
+
+    styles:{
+      font:"helvetica",
+      fontSize:6.2,
+      cellPadding:3,
+      lineColor:[0,0,0],
+      lineWidth:.25,
+      textColor:[0,0,0],
+      valign:"middle"
+    },
+
+    headStyles:{
+      fontStyle:"bold",
+      fontSize:6.2,
+      halign:"center",
+      fillColor:[248,248,248],
+      textColor:[0,0,0]
+    },
+
+    bodyStyles:{
+      minCellHeight:15
+    }
+
+  });
+
+
+  y =
+    doc.lastAutoTable.finalY + 3;
+
+
+  /* =================================================
+     GST SUMMARY
+  ================================================= */
+
+  doc.autoTable({
+
+    startY:y,
+
+    margin:{
+      left:LEFT,
+      right:10
+    },
+
+    theme:"grid",
+
+    head:[
+      [
+        "GST Rate",
+        "Taxable Value",
+        "CGST",
+        "SGST",
+        "IGST",
+        "Total GST"
+      ]
+    ],
+
+    body:[
+      [
+        gstRate+"%",
+        money(taxable),
+        money(cgst),
+        money(sgst),
+        money(igst),
+        money(totalGST)
+      ]
+    ],
+
+    columnStyles:{
+
+      0:{
+        cellWidth:25,
+        halign:"center"
+      },
+
+      1:{
+        cellWidth:40,
+        halign:"right"
+      },
+
+      2:{
+        cellWidth:31,
+        halign:"right"
+      },
+
+      3:{
+        cellWidth:31,
+        halign:"right"
+      },
+
+      4:{
+        cellWidth:31,
+        halign:"right"
+      },
+
+      5:{
+        cellWidth:32,
+        halign:"right"
+      }
+
+    },
+
+    styles:{
+      font:"helvetica",
+      fontSize:6.2,
+      cellPadding:3,
+      lineColor:[0,0,0],
+      lineWidth:.25,
+      textColor:[0,0,0],
+      valign:"middle"
+    },
+
+    headStyles:{
+      fontStyle:"bold",
+      fontSize:6,
+      halign:"center",
+      fillColor:[248,248,248],
+      textColor:[0,0,0]
+    },
+
+    bodyStyles:{
+      minCellHeight:10
+    }
+
+  });
+
+
+  y =
+    doc.lastAutoTable.finalY + 3;
+
+
+  /* =================================================
+     TOTALS
+  ================================================= */
+
+  doc.autoTable({
+
+    startY:y,
+
+    margin:{
+      left:LEFT,
+      right:10
+    },
+
+    theme:"grid",
+
+    body:[
+
+      [
+        "Taxable Value",
+        money(taxable)
+      ],
+
+      [
+        "CGST",
+        money(cgst)
+      ],
+
+      [
+        "SGST",
+        money(sgst)
+      ],
+
+      [
+        "IGST",
+        money(igst)
+      ],
+
+      [
+        "Total GST",
+        money(totalGST)
+      ],
+
+      [
+        "GRAND TOTAL",
+        "₹ "+money(invoiceValue)
+      ]
+
+    ],
+
+    columnStyles:{
+
+      0:{
+        cellWidth:145,
+        halign:"left"
+      },
+
+      1:{
+        cellWidth:45,
+        halign:"right"
+      }
+
+    },
+
+    styles:{
+      font:"helvetica",
+      fontSize:6.2,
+      cellPadding:2.2,
+      lineColor:[0,0,0],
+      lineWidth:.25,
+      textColor:[0,0,0],
+      minCellHeight:5.5
+    },
+
+    didParseCell:function(data){
+
+      if(
+        data.row.index === 5
+      ){
+
+        data.cell.styles.fontStyle =
+          "bold";
+
+      }
+
+    }
+
+  });
+
+
+  y =
+    doc.lastAutoTable.finalY + 4;
+
+
+  /* =================================================
+     PAYMENT
+  ================================================= */
+
+  doc.setFont(
+    "helvetica",
+    "normal"
+  );
+
+  doc.setFontSize(6.2);
+
 
   doc.text(
-    "₹ "+money(total),
-    split-3,
-    y+36,
-    {align:"right"}
-  );
-
-
-  y+=44;
-
-
-  /* ---------- PAYMENT ---------- */
-
-  text(
-    doc,
     "Payment: Cash / UPI  •  B2C Sale",
     105,
     y,
-    6.5,
-    "center"
+    {
+      align:"center"
+    }
   );
 
 
-  y+=16;
+  y += 9;
 
 
-  /* ---------- SIGNATURES ---------- */
+  /* =================================================
+     SIGNATURES
+  ================================================= */
 
-  line(
-    doc,
+  doc.line(
     20,
     y,
-    85,
+    80,
     y
   );
 
-  line(
-    doc,
-    125,
+  doc.line(
+    130,
     y,
     190,
     y
   );
 
-  text(
-    doc,
+
+  doc.setFontSize(5.8);
+
+
+  doc.text(
     "Customer Signature",
-    52.5,
+    50,
     y+4,
-    5.8,
-    "center"
+    {
+      align:"center"
+    }
   );
 
-  text(
-    doc,
+
+  doc.text(
     "For I M ENTERPRISES",
-    157.5,
+    160,
     y+4,
-    5.8,
-    "center"
+    {
+      align:"center"
+    }
   );
 
-  text(
-    doc,
+
+  doc.text(
     "Authorised Signatory",
-    157.5,
-    y+12,
-    5.8,
-    "center"
+    160,
+    y+11,
+    {
+      align:"center"
+    }
   );
 
-
-  /*
-     Outer border.
-     This is deliberately inside A5 page.
-  */
-
-  doc.rect(
-    5,
-    20,
-    200,
-    y+17-20
-  );
 }
 
 
-/* =========================
-   GSTR-1 FINAL PAGE
-========================= */
+/* =====================================================
+   GSTR-1 REPORT
+===================================================== */
 
-function gstr1Page(doc){
+function createGSTR1Page(doc){
 
-  header(doc);
+  drawHeader(doc);
 
-  doc.setFont("helvetica","bold");
-  doc.setFontSize(11);
+
+  doc.setFont(
+    "helvetica",
+    "bold"
+  );
+
+  doc.setFontSize(10);
+
 
   doc.text(
     "GSTR-1 REPORT",
     105,
     27,
-    {align:"center"}
+    {
+      align:"center"
+    }
   );
 
-  doc.setFont("helvetica","normal");
-  doc.setFontSize(6.5);
+
+  doc.setFont(
+    "helvetica",
+    "normal"
+  );
+
+  doc.setFontSize(6);
+
 
   doc.text(
     "B2C Sales Summary",
     105,
     31,
-    {align:"center"}
+    {
+      align:"center"
+    }
   );
 
 
-  const cols=[
+  const columns=[
     "Particulars",
     "No. of Bills",
     "Taxable Value",
@@ -718,222 +1321,374 @@ function gstr1Page(doc){
   ];
 
 
-  const body=
-    summary.map(r=>
-      cols.map(c=>
-        c==="Particulars"
-          ? String(val(r,c))
-          : c==="No. of Bills"
-            ? String(num(val(r,c)))
-            : money(val(r,c))
-      )
-    );
+  const body =
+    summary.map(row=>{
+
+      return columns.map(column=>{
+
+        if(
+          column ===
+          "Particulars"
+        ){
+
+          return String(
+            getValue(
+              row,
+              column
+            )
+          );
+
+        }
 
 
-  /*
-     Total table width = 200 mm.
-     Therefore nothing is cut off.
-  */
+        if(
+          column ===
+          "No. of Bills"
+        ){
+
+          return String(
+            number(
+              getValue(
+                row,
+                column
+              )
+            )
+          );
+
+        }
+
+
+        return money(
+          getValue(
+            row,
+            column
+          )
+        );
+
+      });
+
+    });
+
 
   doc.autoTable({
 
-    startY:35,
-
-    head:[cols],
-
-    body:body,
+    startY:34,
 
     margin:{
-      left:5,
-      right:5
+      left:10,
+      right:10
     },
 
     theme:"grid",
 
+    head:[
+      columns
+    ],
+
+    body:body,
+
     styles:{
+
       font:"helvetica",
-      fontSize:5.5,
-      cellPadding:1.8,
-      halign:"right",
+
+      fontSize:5,
+
+      cellPadding:1.7,
+
       lineColor:[0,0,0],
+
       lineWidth:.2,
+
+      textColor:[0,0,0],
+
+      valign:"middle",
+
       overflow:"linebreak"
+
     },
 
     headStyles:{
-      halign:"center",
+
       fontStyle:"bold",
-      fillColor:[245,245,245],
-      textColor:[0,0,0],
-      fontSize:5.5
+
+      fontSize:5,
+
+      halign:"center",
+
+      fillColor:[248,248,248],
+
+      textColor:[0,0,0]
+
     },
 
     columnStyles:{
-      0:{halign:"left",cellWidth:42},
-      1:{cellWidth:20},
-      2:{cellWidth:26},
-      3:{cellWidth:22},
-      4:{cellWidth:22},
-      5:{cellWidth:20},
-      6:{cellWidth:24},
-      7:{cellWidth:24}
+
+      0:{
+        cellWidth:42,
+        halign:"left"
+      },
+
+      1:{
+        cellWidth:20,
+        halign:"right"
+      },
+
+      2:{
+        cellWidth:25,
+        halign:"right"
+      },
+
+      3:{
+        cellWidth:21,
+        halign:"right"
+      },
+
+      4:{
+        cellWidth:21,
+        halign:"right"
+      },
+
+      5:{
+        cellWidth:20,
+        halign:"right"
+      },
+
+      6:{
+        cellWidth:21,
+        halign:"right"
+      },
+
+      7:{
+        cellWidth:20,
+        halign:"right"
+      }
+
     }
 
   });
 
 
-  text(
-    doc,
+  doc.setFont(
+    "helvetica",
+    "normal"
+  );
+
+  doc.setFontSize(5);
+
+
+  doc.text(
     "Source: GSTR-1 Summary sheet from the uploaded Excel report.",
     105,
-    doc.lastAutoTable.finalY+8,
-    5.8,
-    "center"
+    doc.lastAutoTable.finalY+7,
+    {
+      align:"center"
+    }
   );
+
 }
 
 
-/* =========================
+/* =====================================================
    GENERATE PDF
-========================= */
+===================================================== */
 
 $("generate").addEventListener(
-  "click",
-  ()=>{
+"click",
+function(){
 
-    if(!invoices.length)return;
-
-    try{
-
-      $("generate").disabled=true;
-
-      const {jsPDF}=window.jspdf;
+  if(!invoices.length)
+    return;
 
 
-      /*
-         CRITICAL FIX:
+  try{
 
-         jsPDF A5 Landscape
-         = 210 mm × 148 mm
+    $("generate").disabled =
+      true;
 
-         All invoice coordinates above are
-         designed specifically for this page.
-      */
 
-      const doc=new jsPDF({
+    const {
+      jsPDF
+    } = window.jspdf;
+
+
+    /*
+       IMPORTANT
+
+       A5 LANDSCAPE
+
+       Width  = 210 mm
+       Height = 148 mm
+    */
+
+    const doc =
+      new jsPDF({
 
         orientation:"landscape",
 
         unit:"mm",
 
-        format:"a5"
+        format:"a5",
+
+        compress:true
 
       });
 
 
-      invoices.forEach((r,i)=>{
+    /* Invoices */
 
-        if(i){
+    invoices.forEach(
+      function(row,index){
+
+        if(index > 0){
+
           doc.addPage();
+
         }
 
-        invoicePage(
+
+        createInvoicePage(
           doc,
-          r
+          row
         );
 
-        $("bar").style.width=
-          ((i+1)/invoices.length*95)+"%";
 
-      });
+        $("bar").style.width =
+          (
+            (index+1) /
+            invoices.length *
+            95
+          )+"%";
 
-
-      /* Final GSTR-1 page */
-
-      doc.addPage();
-
-      gstr1Page(doc);
-
-
-      doc.save(
-        "IM_Enterprises_A5_Landscape_Invoices_GSTR1.pdf"
-      );
+      }
+    );
 
 
-      $("bar").style.width="100%";
+    /* Final GSTR-1 */
 
-      $("status").textContent=
-        `PDF created: ${invoices.length} invoices + 1 GSTR-1 report page.`;
+    doc.addPage();
 
-    }
 
-    catch(err){
+    createGSTR1Page(
+      doc
+    );
 
-      $("status").textContent=
-        "PDF error: "+err.message;
 
-    }
+    /* Save */
 
-    finally{
+    doc.save(
+      "IM_Enterprises_A5_Landscape_Invoices_GSTR1.pdf"
+    );
 
-      $("generate").disabled=false;
 
-    }
+    $("bar").style.width =
+      "100%";
+
+
+    $("status").textContent =
+      "PDF created: "
+      + invoices.length
+      + " invoices + 1 GSTR-1 report page.";
 
   }
-);
 
 
-/* =========================
-   INSTALL APP / PWA
-========================= */
+  catch(error){
 
-let deferredPrompt;
+    console.error(error);
+
+    $("status").textContent =
+      "PDF error: "
+      + error.message;
+
+  }
+
+
+  finally{
+
+    $("generate").disabled =
+      false;
+
+  }
+
+});
+
+
+/* =====================================================
+   PWA INSTALL
+===================================================== */
+
+let deferredPrompt = null;
+
 
 window.addEventListener(
-  "beforeinstallprompt",
-  e=>{
+"beforeinstallprompt",
+function(event){
 
-    e.preventDefault();
+  event.preventDefault();
 
-    deferredPrompt=e;
+  deferredPrompt =
+    event;
 
-    $("installBtn").style.display="block";
+  $("installBtn").style.display =
+    "block";
 
-  }
-);
+});
 
 
 $("installBtn").addEventListener(
-  "click",
-  async()=>{
+"click",
+async function(){
 
-    if(!deferredPrompt)return;
-
-    deferredPrompt.prompt();
-
-    await deferredPrompt.userChoice;
-
-    deferredPrompt=null;
-
-    $("installBtn").style.display="none";
-
-  }
-);
+  if(!deferredPrompt)
+    return;
 
 
-if("serviceWorker" in navigator){
+  deferredPrompt.prompt();
+
+
+  await deferredPrompt.userChoice;
+
+
+  deferredPrompt =
+    null;
+
+
+  $("installBtn").style.display =
+    "none";
+
+});
+
+
+/* =====================================================
+   SERVICE WORKER
+===================================================== */
+
+if(
+  "serviceWorker" in navigator
+){
 
   window.addEventListener(
     "load",
-    ()=>{
+    function(){
+
       navigator.serviceWorker
         .register("sw.js")
-        .catch(()=>{});
+        .catch(
+          function(error){
+            console.log(
+              "Service worker:",
+              error
+            );
+          }
+        );
+
     }
   );
 
 }
+
 </script>
+
 </body>
+
 </html>
