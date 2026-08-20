@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="manifest.json">
+<title>IM Enterprises Invoice Generator</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f5f7;color:#202534;font-family:Arial,sans-serif}.app{max-width:760px;margin:auto;padding:16px}.card{background:#fff;border:1px solid #e1e3e8;border-radius:14px;padding:16px;margin-bottom:14px}h1{font-size:21px;margin:0 0 5px}.muted{font-size:13px;color:#737985;line-height:1.45}input{width:100%;padding:12px;border:1px dashed #aaa;border-radius:10px}.row{display:flex;gap:10px;flex-wrap:wrap}.btn{border:0;border-radius:10px;padding:12px 16px;font-weight:700;background:#1775c9;color:white}.btn:disabled{opacity:.45}.btn.secondary{background:#e9edf2;color:#202534}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{padding:12px;border:1px solid #e5e7eb;border-radius:10px;background:#fafafa}.stat b{display:block;font-size:18px}.stat span{font-size:12px;color:#737985}.progress{height:8px;background:#e7e9ed;border-radius:8px;overflow:hidden}.bar{height:100%;width:0;background:#1775c9}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="card"><h1>I M ENTERPRISES — Invoice Generator</h1><div class="muted">A5 Portrait • Modern card-style invoice • Excel → PDF</div></div>
+<div class="card"><b>Upload Excel file</b><p class="muted">Expected sheets: <b>Sale Bills</b> and <b>GSTR-1 Summary</b>. Final TOTAL row is ignored.</p><input id="file" type="file" accept=".xlsx,.xls"></div>
+<div class="card"><div class="stats"><div class="stat"><b id="invoiceCount">0</b><span>Invoices</span></div><div class="stat"><b id="totalSales">Rs.0.00</b><span>Total Sales</span></div><div class="stat"><b id="gstrRows">0</b><span>GSTR-1 Rows</span></div></div></div>
+<div class="card"><div class="row"><button class="btn" id="generate" disabled>Generate PDF</button><button class="btn secondary" id="installBtn" style="display:none">Install App</button></div><div style="height:12px"></div><div class="progress"><div class="bar" id="bar"></div></div><div id="status">Upload your Excel file to begin.</div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
+<script>
+const BUSINESS="I M ENTERPRISES",GSTIN="29BPZPJ1392D1ZE";
+const ADDRESS1="Mahal Mas Opp Mahtar Mahal Masjid, PID-23427, Ward No. 7A, CTS-67, CR-53,";
+const ADDRESS2="Jamiya Masjid Road, Vijayapura, Karnataka - 586101";
+let invoices=[],summary=[];
+const $=id=>document.getElementById(id);
+const money=v=>Number(v||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
+const num=v=>{const n=Number(v);return isFinite(n)?n:0};
+const val=(r,k)=>r[k]!==undefined?r[k]:(r[k.replace(/ /g,"")]!==undefined?r[k.replace(/ /g,"")]:"");
+function dateText(v){if(v instanceof Date&&!isNaN(v))return String(v.getDate()).padStart(2,"0")+"-"+String(v.getMonth()+1).padStart(2,"0")+"-"+v.getFullYear();if(typeof v==="number"){const d=new Date(Math.round((v-25569)*86400*1000));if(!isNaN(d))return dateText(d)}const d=new Date(v);return isNaN(d)?"":dateText(d)}
+function buildInvoices(rows){const m=new Map();rows.forEach(r=>{const no=String(val(r,"Invoice No.")||"").trim();if(!no||no.toUpperCase().includes("TOTAL"))return;if(!m.has(no))m.set(no,[]);m.get(no).push(r)});return [...m.values()]}
+
+$("file").addEventListener("change",async e=>{
+ try{
+  const f=e.target.files[0];if(!f)return;$("status").textContent="Reading Excel file…";
+  const wb=XLSX.read(await f.arrayBuffer(),{type:"array",cellDates:true});
+  if(!wb.SheetNames.includes("Sale Bills"))throw Error('Sheet "Sale Bills" not found.');
+  invoices=buildInvoices(XLSX.utils.sheet_to_json(wb.Sheets["Sale Bills"],{defval:""}));
+  summary=wb.SheetNames.includes("GSTR-1 Summary")?XLSX.utils.sheet_to_json(wb.Sheets["GSTR-1 Summary"],{defval:""}):[];
+  $("invoiceCount").textContent=invoices.length;
+  $("totalSales").textContent="Rs."+money(invoices.reduce((a,g)=>a+num(val(g[0],"Invoice Value")),0));
+  $("gstrRows").textContent=summary.length;$("generate").disabled=!invoices.length;
+  $("status").textContent=`Loaded ${invoices.length} invoices and ${summary.length} GSTR-1 summary rows.`;
+ }catch(err){$("status").textContent="Error: "+err.message;$("generate").disabled=true}
+});
+
+function header(doc){
+ doc.setFont("helvetica","bold");doc.setFontSize(12);doc.setTextColor(32,37,52);doc.text(BUSINESS,14,10);
+ doc.setFont("helvetica","normal");doc.setFontSize(7);doc.text("GSTIN : "+GSTIN,14,15);
+ doc.setFontSize(6);doc.text(ADDRESS1,14,20);doc.text(ADDRESS2,14,24);
+ doc.setDrawColor(225,227,232);doc.setLineWidth(.35);doc.line(14,28,134,28);
+}
+function roundedBox(doc,x,y,w,h){doc.setDrawColor(218,220,225);doc.setFillColor(255,255,255);doc.setLineWidth(.35);doc.roundedRect(x,y,w,h,4,4,"FD")}
+function invoicePage(doc,rows){
+ const r=rows[0],no=val(r,"Invoice No."),dt=dateText(val(r,"Invoice Date")),buyer=val(r,"Buyer")||"Cash Sale (B2C)",pos=val(r,"Place of Supply")||"Karnataka (29)";
+ header(doc);
+ doc.setFont("helvetica","bold");doc.setFontSize(16);doc.text("TAX INVOICE",74,39,{align:"center"});
+ doc.setFont("helvetica","bold");doc.setFontSize(6.5);doc.setTextColor(115,121,133);
+ doc.text("BILL TO:",14,50);doc.text("INVOICE NO.",134,50,{align:"right"});doc.text("DATE:",134,58,{align:"right"});doc.text("PLACE OF SUPPLY:",134,66,{align:"right"});
+ doc.setTextColor(32,37,52);doc.setFontSize(8);doc.text(String(buyer),14,56);doc.text(String(no),134,55,{align:"right"});doc.text(String(dt),134,63,{align:"right"});doc.text(String(pos),134,71,{align:"right"});
+ let y=77,tax=0,cg=0,sg=0,ig=0,tg=0,grand=0;
+ rows.forEach(row=>{
+  const p=String(val(row,"Particulars")||""),q=num(val(row,"Quantity"))||1,t=num(val(row,"Taxable Value")),rate=t/q,gr=num(val(row,"GST Rate %")),c=num(val(row,"CGST")),s=num(val(row,"SGST")),i=num(val(row,"IGST")),g=num(val(row,"Total GST")),iv=num(val(row,"Invoice Value"));
+  tax+=t;cg+=c;sg+=s;ig+=i;tg+=g;grand+=iv;
+  roundedBox(doc,14,y,120,30);
+  doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(23,117,201);doc.text(p.length>39?p.slice(0,39)+"…":p,17,y+9);
+  doc.setFont("helvetica","normal");doc.setFontSize(6.5);doc.setTextColor(120,126,138);
+  doc.text("QUANTITY",17,y+16);doc.text("PRICE / UNIT",58,y+16);doc.text("GST",91,y+16);doc.text("AMOUNT",131,y+16,{align:"right"});
+  doc.setFontSize(8);doc.setTextColor(32,37,52);doc.text(String(q).replace(".00",""),17,y+25);doc.text("Rs. "+money(rate),58,y+25);doc.text(gr.toFixed(1)+"%",91,y+25);doc.text("Rs. "+money(t+g),131,y+25,{align:"right"});
+  y+=34;
+ });
+ roundedBox(doc,14,y,120,52);
+ doc.setFont("helvetica","bold");doc.setFontSize(9);doc.setTextColor(32,37,52);doc.text("PRICING / TAX BREAKUP",18,y+10);
+ [["Taxable Value",tax],["CGST",cg],["SGST",sg],["IGST",ig],["Total GST",tg]].forEach((a,i)=>{doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(115,121,133);doc.text(a[0],18,y+20+i*6.2);doc.setTextColor(32,37,52);doc.text("Rs. "+money(a[1]),130,y+20+i*6.2,{align:"right"})});
+ const gy=y+56;roundedBox(doc,14,gy,120,20);doc.setFont("helvetica","bold");doc.setFontSize(9);doc.setTextColor(23,117,201);doc.text("TOTAL AMOUNT",18,gy+8);doc.setFontSize(10);doc.text("Rs. "+money(grand||tax+tg),130,gy+13,{align:"right"});
+ const sy=gy+29;doc.setFont("helvetica","normal");doc.setFontSize(6.5);doc.setTextColor(115,121,133);doc.text("Payment: Cash / UPI  •  B2C Sale",74,sy,{align:"center"});
+ doc.setDrawColor(190,193,199);doc.line(18,sy+17,60,sy+17);doc.line(88,sy+17,130,sy+17);doc.setFontSize(5.8);doc.text("Customer Signature",39,sy+21,{align:"center"});doc.text("For I M ENTERPRISES",109,sy+21,{align:"center"});doc.text("Authorised Signatory",109,sy+27,{align:"center"});
+}
+function gstrPage(doc){
+ header(doc);doc.setFont("helvetica","bold");doc.setFontSize(13);doc.text("GSTR-1 REPORT",74,35,{align:"center"});doc.setFont("helvetica","normal");doc.setFontSize(6);doc.text("B2C Sales Summary",74,40,{align:"center"});
+ const cols=["Particulars","No. of Bills","Taxable Value","CGST","SGST","IGST","Total GST","Invoice Value"];
+ const body=summary.map(r=>cols.map(c=>c==="Particulars"?String(val(r,c)):c==="No. of Bills"?String(num(val(r,c))):money(val(r,c))));
+ doc.autoTable({startY:45,margin:{left:8,right:8},theme:"grid",head:[cols],body,styles:{font:"helvetica",fontSize:4.5,cellPadding:1.4,lineColor:[210,212,216],lineWidth:.2,textColor:[32,37,52],overflow:"linebreak"},headStyles:{fontStyle:"bold",fontSize:4.5,halign:"center",fillColor:[248,249,250],textColor:[32,37,52]},columnStyles:{0:{cellWidth:31,halign:"left"},1:{cellWidth:14,halign:"right"},2:{cellWidth:18,halign:"right"},3:{cellWidth:16,halign:"right"},4:{cellWidth:16,halign:"right"},5:{cellWidth:14,halign:"right"},6:{cellWidth:17,halign:"right"},7:{cellWidth:18,halign:"right"}}});
+ doc.setFont("helvetica","normal");doc.setFontSize(4.8);doc.setTextColor(115,121,133);doc.text("Source: GSTR-1 Summary sheet from the uploaded Excel report.",74,doc.lastAutoTable.finalY+7,{align:"center"});
+}
+$("generate").addEventListener("click",()=>{
+ if(!invoices.length)return;
+ try{
+  $("generate").disabled=true;const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:"portrait",unit:"mm",format:"a5",compress:true});
+  invoices.forEach((rows,i)=>{if(i)doc.addPage();invoicePage(doc,rows);$("bar").style.width=((i+1)/invoices.length*95)+"%"});
+  doc.addPage();gstrPage(doc);doc.save("IM_Enterprises_A5_Portrait_Invoices_GSTR1.pdf");$("bar").style.width="100%";$("status").textContent=`PDF created: ${invoices.length} invoices + 1 GSTR-1 report page.`;
+ }catch(e){console.error(e);$("status").textContent="PDF error: "+e.message}finally{$("generate").disabled=false}
+});
+let deferredPrompt=null;
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredPrompt=e;$("installBtn").style.display="block"});
+$("installBtn").addEventListener("click",async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;$("installBtn").style.display="none"});
+if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+</script>
+</body>
+</html>
