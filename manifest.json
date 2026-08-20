@@ -1,0 +1,10 @@
+{
+  "name": "I M Enterprises Invoice Generator",
+  "short_name": "IM Invoice",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "description": "Excel to A5 portrait invoice PDF generator for I M Enterprises.",
+  "icons": [{"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}
